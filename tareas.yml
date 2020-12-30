@@ -1,0 +1,49 @@
+---
+
+- hosts: centos
+  become: true
+  vars_files:
+    - ./ansible-vault.yml
+ 
+  tasks:
+
+  - name: copiar archivo .rpm
+    copy:
+      src: ./epel-release-latest-7.noarch.rpm
+      dest: /tmp/
+
+
+  - name: install rpm 
+    yum:
+      name:  /tmp/epel-release-latest-7.noarch.rpm
+      state: present
+      #name: epel-release-latest-7.noarch
+      #state: removed
+
+
+  - name: install monit
+    yum:
+      name: monit
+      state: present
+      #state: removed
+
+  - name: configuracion monit
+    template:
+      src: ./monitrc
+      dest: /etc/monitrc
+      mode: '0600'      
+
+  - name: habilitar puerto interfaz web
+    shell: firewall-cmd --permanent --add-port=2812/tcp && firewall-cmd --reload
+    #shell: firewall-cmd --permanent --remove-port=2812/tcp && firewall-cmd --reload
+
+  - name: copia archivos /bin/
+    copy:
+      src: ./bin/
+      dest: /home/{{ username_server }}/bin/
+
+  - name: inicia monit 
+    service:
+      name: monit
+      state: started
+
